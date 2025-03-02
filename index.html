@@ -1,115 +1,63 @@
 <!doctype html>
 <html>
-	<head lang="ja">
-		<meta charset="utf-8">
-		<meta http-equiv="Content-Language" content="ja">
-		<meta name="google" content="notranslate">
-		<title>人工言語：単語生成ツール</title>
-		<style>
-			input, textarea {
-				box-sizing: border-box;
-				width: 300px;
-			}
-			#length_min, #length_max {
-				width: 150px;
-			}
-			#result {
-				height: 500px;
-			}
-		</style>
-	</head>
-	<body>
-		子音 (,区切り)<br>
-		<textarea id="consonant">k,s,t,n,h,m,l,g,z,d,b,p</textarea><br>
-		母音 (,区切り)<br>
-		<textarea id="vowel">a,e,i,o,u</textarea><br>
-		含めない (,区切り)<br>
-		<textarea id="exclude_char"></textarea><br>
-		…最初 (,区切り)<br>
-		<textarea id="char_exclude_first"></textarea><br>
-		…最後 (,区切り)<br>
-		<textarea id="char_exclude_last">k,s,t,n,h,m,l,g,z,d,b,p</textarea><br>
-		文字数<br>
-		<input id="length_min" value="2"><input id="length_max" value="5"><br>
-		単語数<br>
-		<input id="word_count" value="100"><br>
-		<input id="generating_btn" type="submit" value="生成"><br>
-		<textarea id="result"></textarea>
-		<script>
-			const consonant = document.querySelector("#consonant"),
-				vowel = document.querySelector("#vowel"),
-				exclude_char = document.querySelector("#exclude_char"),
-				char_exclude_first = document.querySelector("#char_exclude_first"),
-				char_exclude_last = document.querySelector("#char_exclude_last"),
-				length_min = document.querySelector("#length_min"),
-				length_max = document.querySelector("#length_max"),
-				generating_btn = document.querySelector("#generating_btn"),
-				result = document.querySelector("#result");
-
-			function word_generation() {
-				for (let i = 0; i < + word_count.value; i++) {
-					char_num = 0;
-					generated_word = "";
-					excluded_char = false;
-
-					consonant_or_vowel = ~~(Math.random() * 2);
-					ran_word_length = + length_min.value + ~~(Math.random() * (+ length_max.value - + length_min.value + 1));
-
-					while (char_num < ran_word_length) {
-						if (consonant_or_vowel % 2 === 0) {
-							ran_vowel_num = ~~(Math.random() * vowel.value.split(",").length);
-							ran_vowel = vowel.value.split(",")[ran_vowel_num];
-
-							generated_word += ran_vowel;
-
-							char_num += ran_vowel.length;
-						} else {
-							ran_consonant_num = ~~(Math.random() * consonant.value.split(",").length);
-							ran_consonant = consonant.value.split(",")[ran_consonant_num];
-
-							generated_word += ran_consonant;
-
-							char_num += ran_consonant.length;
-						}
-
-						consonant_or_vowel++;
+<head>
+	<meta charset=utf-8>
+	<title>単語生成ツール</title>
+	<style>
+		textarea,input{
+			box-sizing:border-box;
+			width:300px
+		}
+		#min_text_num,#max_text_num{
+			width:150px
+		}
+		#result_text{
+			height:300px
+		}
+	</style>
+</head>
+<body>
+	<label>子音<br><textarea id=c_text>k s t n h m l g z d b p</textarea></label><br>
+	<label>母音<br><textarea id=v_text>a e i o u</textarea></label><br>
+	<label>除く<br><textarea id=exclude_text></textarea></label><br>
+	<label>最初を除く<br><textarea id=f_exclude_text>a e i o u</textarea></label><br>
+	<label>最後を除く<br><textarea id=e_exclude_text>a e i o u</textarea></label><br>
+	<label>文字数<br><input id=min_text_num type=number value=3><input id=max_text_num type=number value=5></label><br>
+	<label>単語数<br><input id=word_num type=number value=10></label><br>
+	<input type=submit value=生成 onclick=gen()><br>
+	<textarea id=result_text></textarea>
+	<script>
+		judge=word=>{
+			if(fetv=f_exclude_text.value)for(v of fetv.split(" "))if(word.slice(0,1)==v)return 0;
+			if(eetv=e_exclude_text.value)for(v of eetv.split(" "))if(word.slice(-1)==v)return 0;
+			if(etv=exclude_text.value)for(v of etv.split(" "))if(word.match(v))return 0;
+			if(rtv=result_text.value)for(v of rtv.split("\n"))if(word==v)return 0;
+			return 1
+		};
+		gen=()=>{
+			cs=c_text.value.split(" "),
+			vs=v_text.value.split(" "),
+			ps=[...cs,...vs];
+			for(i=0;i<+word_num.value;i++){
+				word="",
+				mitn=+min_text_num.value,
+				text_num=~~(Math.random()*(+max_text_num.value-mitn+1))+mitn;
+				for(j=0;j<text_num;j++){
+					mr=Math.random();
+					if(!j){
+						word+=ps[~~(mr*ps.length)]
+					}else{
+						word+=is_c?vs[~~(mr*vs.length)]:cs[~~(mr*cs.length)]
 					}
-
-					result.value.split("\n").forEach(elem => {
-						if (result.value && elem === generated_word) {
-							excluded_char = true;
-						}
-					});
-
-					exclude_char.value.split(",").forEach(elem => {
-						if (exclude_char.value && generated_word.includes(elem)) {
-							excluded_char = true;
-						}
-					});
-
-					char_exclude_first.value.split(",").forEach(elem => {
-						if (char_exclude_first.value && generated_word.slice(0, elem.length) === elem) {
-							excluded_char = true;
-						}
-					});
-
-					char_exclude_last.value.split(",").forEach(elem => {
-						if (char_exclude_last.value && generated_word.slice(-elem.length) === elem) {
-							excluded_char = true;
-						}
-					});
-
-					if (!excluded_char && generated_word.length <= + length_max.value) {
-						result.value += generated_word + "\n";
-					} else {
-						i--;
-					}
+					is_c=cs.includes(word.slice(-1))?1:0
+				}
+				if(judge(word)){
+					result_text.value+=word+"\n"
+				}else{
+					i--
 				}
 			}
-
-			generating_btn.addEventListener("click", ()=> {
-				word_generation();
-			});
-		</script>
-	</body>
+		}
+	</script>
+</body>
 </html>
